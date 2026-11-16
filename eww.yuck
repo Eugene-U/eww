@@ -1,5 +1,6 @@
 (include "./modules/variables.yuck")
 (include "./modules/workspaces.yuck")
+(include "./modules/active-window.yuck")
 ; (include "./windows/catcher.yuck")
 ; (include "./modules/datetime.yuck")
 ; (include "./modules/keyboard.yuck")
@@ -116,7 +117,7 @@
 	:wm-ignore false
 	(bar :monitor_name "HDMI-A-1"
 		(workspaces :monitor_name "HDMI-A-1")
-		(test)
+		(active_window)
 		(test)
 	)
 )
@@ -134,7 +135,7 @@
 	:wm-ignore false
 	(bar :monitor_name "DP-1"
 		(workspaces :monitor_name "DP-1")
-		(another)
+		(active_window)
 		(another)
 	)
 )

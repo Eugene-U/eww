@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+from typing import Any, TypedDict, cast
+
+DEBOUNCE_MS = 50.0
+
+RELEVANT = (
+    "activewindow>>",
+    "activewindowv2>>",
+    "closewindow>>",
+    "openwindow>>",
+    "movewindow",
+    "focusedmon>>",
+    "workspace>>",
+    "workspacev2>>",
+    "activespecial>>",
+)
+
+
+class ActiveWindow(TypedDict, total=False):
+    address: str
+    title: str
+    class_: str  # not used, key is "class"
+    initialTitle: str
+    initialClass: str
+    monitor: int
+
+
+def hyprctl_json(args: list[str]) -> Any | None:
+    try:
+        out = subprocess.check_output(["hyprctl", "-j", *args], stderr=subprocess.DEVNULL)
+        return json.loads(out)
+    except Exception:
+        return None
+
+
+def build_state() -> dict[str, str | bool]:
+    raw = hyprctl_json(["activewindow"])
+    if not isinstance(raw, dict) or not raw:
+        return {"title": "", "class": "", "empty": True}
+
+    data = cast(dict[str, Any], raw)
+    title = data.get("title")
+    cls = data.get("class")
+    if not isinstance(title, str):
+        title = ""
+    if not isinstance(cls, str):
+        cls = ""
+
+    return {
+        "title": title,
+        "class": cls,
+        "empty": False,
+    }
+
+
+def emit(state: dict[str, str | bool], last: str | None) -> str | None:
+    s = json.dumps(state, separators=(",", ":"), ensure_ascii=False)
+    if s != last:
+        sys.stdout.write(s + "\n")
+        sys.stdout.flush()
+        return s
+    return last
+
+
+def main() -> None:
+    last: str | None = None
+    last = emit(build_state(), last)
+
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+    if not runtime or not sig:
+        while True:
+            time.sleep(60)
+
+    path = os.path.join(runtime, "hypr", sig, ".socket2.sock")
+    while True:
+        try:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(path)
+            with sock:
+                buf = ""
+                pending = False
+                last_event = 0.0
+                while True:
+                    data = sock.recv(4096)
+                    if not data:
+                        break
+                    buf += data.decode("utf-8", errors="ignore")
+                    while "\n" in buf:
+                        line, buf = buf.split("\n", 1)
+                        if any(line.startswith(ev) for ev in RELEVANT):
+                            pending = True
+                    now = time.time() * 1000.0
+                    if pending and (now - last_event) >= DEBOUNCE_MS:
+                        last = emit(build_state(), last)
+                        pending = False
+                        last_event = now
+        except Exception:
+            time.sleep(0.5)
+
+        try:
+            last = emit(build_state(), last)
+        except Exception:
+            pass
+
+
+if __name__ == "__main__":
+    main()

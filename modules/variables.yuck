@@ -1,1 +1,3 @@
 (defvar active_monitor "")
+(deflisten workspaces_data :initial "{}" "~/.config/eww/scripts/workspaces-listen")
+(deflisten active_window_data :initial "{\"title\":\"\",\"class\":\"\",\"empty\":true}" "~/.config/eww/scripts/active-window-listen")

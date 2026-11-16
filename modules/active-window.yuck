@@ -1,0 +1,14 @@
+(defwidget active_window []
+	(box
+		:class "active-window"
+		:halign "center"
+		:hexpand true
+		:space-evenly false
+		(label
+			:class "active-window-title"
+			:limit-width 60
+			:truncate true
+			:text {active_window_data.empty ? "" : active_window_data.title}
+		)
+	)
+)

@@ -1,0 +1,17 @@
+(deflisten workspaces_data :initial "{}" "~/.config/eww/scripts/workspaces-listen")
+
+(defwidget workspaces [monitor_name]
+	(box
+		:class "workspaces"
+		:orientation "h"
+		:space-evenly false
+		:halign "start"
+		(for ws in {workspaces_data[monitor_name] ?: []}
+			(button
+				:class "ws ${ws.active ? "active" : ""} ${ws.occupied ? "occupied" : "empty"}"
+				:onclick "/usr/bin/hyprctl dispatch 'hl.dsp.focus({ workspace = ${ws.global} })'"
+				"${ws.local == 10 ? 0 : ws.local}"
+			)
+		)
+	)
+)

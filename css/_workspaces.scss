@@ -1,0 +1,32 @@
+.workspaces {
+    margin: 4px 5px;
+    border-radius: 5px;
+    background-color: $surface;
+    & .ws:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+    }
+    & .ws:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+}
+
+.ws {
+    min-width: 20px;
+    color: $fg-muted;
+    font-size: 0.85rem;
+    border-radius: 0px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    &:hover {
+        background-color: $surface-hover;
+        color: $fg;
+    }
+    &.active {
+        background-color: $accent-muted-2;
+        color: $accent;
+    }
+    &.occupied {
+        text-decoration: underline;
+    }
+}

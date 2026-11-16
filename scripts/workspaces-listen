@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import socket
+import subprocess
+import sys
+import time
+from typing import Any, TypedDict, cast
+
+COUNT = 10
+DEBOUNCE_MS = 50.0
+
+RELEVANT = (
+    "workspace>>",
+    "workspacev2>>",
+    "focusedmon>>",
+    "createworkspace",
+    "destroyworkspace",
+    "openwindow>>",
+    "closewindow>>",
+    "movewindow",
+    "monitoradded",
+    "monitorremoved",
+    "renameworkspace",
+    "activespecial>>",
+)
+
+
+class ActiveWorkspace(TypedDict, total=False):
+    id: int
+    name: str
+
+
+class MonitorInfo(TypedDict, total=False):
+    name: str
+    activeWorkspace: ActiveWorkspace
+
+
+class WorkspaceInfo(TypedDict, total=False):
+    id: int
+    name: str
+    monitor: str
+    windows: int
+    hasfullscreen: bool
+    ispersistent: bool
+
+
+class WorkspaceItem(TypedDict):
+    local: int
+    global_: int
+    active: bool
+    occupied: bool
+    persistent: bool
+
+
+# JSON key for global id in output
+def _workspace_item(local: int, global_id: int, active: bool, occupied: bool, persistent: bool) -> dict[str, int | bool]:
+    return {
+        "local": local,
+        "global": global_id,
+        "active": active,
+        "occupied": occupied,
+        "persistent": persistent,
+    }
+
+
+def hyprctl_json(args: list[str]) -> Any | None:
+    try:
+        out = subprocess.check_output(["hyprctl", "-j", *args], stderr=subprocess.DEVNULL)
+        return json.loads(out)
+    except Exception:
+        return None
+
+
+def build_state() -> dict[str, list[dict[str, int | bool]]]:
+    monitors_raw = hyprctl_json(["monitors"])
+    workspaces_raw = hyprctl_json(["workspaces"])
+
+    monitors: list[MonitorInfo] = cast(list[MonitorInfo], monitors_raw) if isinstance(monitors_raw, list) else []
+    workspaces: list[WorkspaceInfo] = cast(list[WorkspaceInfo], workspaces_raw) if isinstance(workspaces_raw, list) else []
+
+    active_by_monitor: dict[str, int | None] = {}
+    for m in monitors:
+        name = m.get("name")
+        if not isinstance(name, str):
+            continue
+        aw = m.get("activeWorkspace")
+        aw_id: int | None = None
+        if isinstance(aw, dict):
+            raw_id = aw.get("id")
+            if isinstance(raw_id, int):
+                aw_id = raw_id
+        active_by_monitor[name] = aw_id
+
+    by_monitor: dict[str, dict[int, WorkspaceInfo]] = {}
+    for ws in workspaces:
+        mon = ws.get("monitor")
+        ws_id = ws.get("id")
+        if not isinstance(mon, str) or not isinstance(ws_id, int):
+            continue
+        by_monitor.setdefault(mon, {})[ws_id] = ws
+
+    monitor_names: list[str] = sorted(
+        {name for name in (m.get("name") for m in monitors) if isinstance(name, str)} | set(by_monitor.keys())
+    )
+
+    result: dict[str, list[dict[str, int | bool]]] = {}
+    for mon in monitor_names:
+        ws_map = by_monitor.get(mon, {})
+        active_id = active_by_monitor.get(mon)
+        items: list[dict[str, int | bool]] = []
+
+        for local in range(1, COUNT + 1):
+            global_id: int | None = None
+            ws_info: WorkspaceInfo | None = None
+
+            for gid, w in ws_map.items():
+                if ((gid - 1) % COUNT) + 1 == local:
+                    global_id = gid
+                    ws_info = w
+                    break
+
+            if global_id is None:
+                known = sorted(ws_map.keys())
+                if known:
+                    base = min(known) - ((min(known) - 1) % COUNT)
+                    global_id = base + (local - 1)
+                else:
+                    global_id = local
+
+            windows = ws_info.get("windows") if ws_info is not None else 0
+            ispersistent = ws_info.get("ispersistent") if ws_info is not None else False
+            occupied = isinstance(windows, int) and windows > 0
+            persistent = bool(ispersistent) if isinstance(ispersistent, bool) else False
+
+            items.append(
+                _workspace_item(
+                    local=local,
+                    global_id=global_id,
+                    active=active_id == global_id if active_id is not None else False,
+                    occupied=occupied,
+                    persistent=persistent,
+                )
+            )
+        result[mon] = items
+    return result
+
+
+def emit(state: dict[str, list[dict[str, int | bool]]], last: str | None) -> str | None:
+    s = json.dumps(state, separators=(",", ":"))
+    if s != last:
+        sys.stdout.write(s + "\n")
+        sys.stdout.flush()
+        return s
+    return last
+
+
+def main() -> None:
+    last: str | None = None
+    last = emit(build_state(), last)
+
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+    if not runtime or not sig:
+        while True:
+            time.sleep(60)
+
+    path = os.path.join(runtime, "hypr", sig, ".socket2.sock")
+    while True:
+        try:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(path)
+            with sock:
+                buf = ""
+                pending = False
+                last_event = 0.0
+                while True:
+                    data = sock.recv(4096)
+                    if not data:
+                        break
+                    buf += data.decode("utf-8", errors="ignore")
+                    while "\n" in buf:
+                        line, buf = buf.split("\n", 1)
+                        if any(line.startswith(ev) for ev in RELEVANT):
+                            pending = True
+                    now = time.time() * 1000.0
+                    if pending and (now - last_event) >= DEBOUNCE_MS:
+                        last = emit(build_state(), last)
+                        pending = False
+                        last_event = now
+        except Exception:
+            time.sleep(0.5)
+
+        try:
+            last = emit(build_state(), last)
+        except Exception:
+            pass
+
+
+if __name__ == "__main__":
+    main()

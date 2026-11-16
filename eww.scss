@@ -1,5 +1,6 @@
 @import 'css/colors';
 @import 'css/bar';
+@import 'css/workspaces';
 
 // @mixin window {
 // 	color: $foreground;
@@ -40,11 +41,10 @@
 // @mixin font {
 // 	font-family: JetBrains Mono, monospace;
 // }
-// * {
-// 	all: unset;
-// 	transition: 200ms ease;
-// 	font-family: JetBrains Nerd Font, Mono;
-// }
+* {
+	all: unset;
+	font-family: JetBrains Nerd Font, Mono;
+}
 
 // @import 'css/datetime';
 // @import 'css/calendar';

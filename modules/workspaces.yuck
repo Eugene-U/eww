@@ -1,5 +1,3 @@
-(deflisten workspaces_data :initial "{}" "~/.config/eww/scripts/workspaces-listen")
-
 (defwidget workspaces [monitor_name]
 	(box
 		:class "workspaces"

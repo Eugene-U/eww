@@ -1,0 +1,57 @@
+@import 'css/colors';
+@import 'css/bar';
+
+// @mixin window {
+// 	color: $foreground;
+// 	background-color: $background;
+// 	border: 2px solid $border;
+// 	box-shadow: 0 2px 3px $shadow;
+// 	border-radius: 16px;
+// }
+// @mixin window-top-right {
+// 	@include window;
+// 	border-top-left-radius: 0;
+// 	border-top-right-radius: 0;
+// 	border-bottom-right-radius: 0;
+// 	border-top: none;
+// 	border-right: none;
+// }
+// @mixin window-top-left {
+// 	@include window;
+// 	border-top-left-radius: 0;
+// 	border-top-right-radius: 0;
+// 	border-bottom-left-radius: 0;
+// 	border-top: none;
+// 	border-left: none;
+// }
+// @mixin tray-widget {
+// 	color: $foreground;
+// 	font-size: 1rem;
+// 	margin: 3px;
+// }
+// @mixin tray-button {
+// 	padding: 2px 8px;
+// 	border-radius: 5px;
+// 	transition: background-color 200ms ease;
+// 	&.active, &:hover {
+// 		background-color: $selected-background;
+// 	}
+// }
+// @mixin font {
+// 	font-family: JetBrains Mono, monospace;
+// }
+// * {
+// 	all: unset;
+// 	transition: 200ms ease;
+// 	font-family: JetBrains Nerd Font, Mono;
+// }
+
+// @import 'css/datetime';
+// @import 'css/calendar';
+// @import 'css/keyboard';
+// @import 'css/system';
+// @import 'css/docker';
+// @import 'css/jira';
+// @import 'css/projects';
+
+

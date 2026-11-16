@@ -1,0 +1,30 @@
+// base
+$bg:              #282a36;
+$fg:              #f8f8f2;
+$fg-muted:        #9b9b9b;
+
+// accent
+$accent:          #d6acff;
+$accent-2:        #ff92df;
+$accent-muted:    #7d5e9b;
+$accent-muted-2:  #836a9c;
+$accent-muted-3:  #392b4d;
+
+// surfaces
+$surface:         #3d334d;
+$surface-hover:   #493e5a;
+$surface-disabled:#554069;
+
+// lines & effects
+$border:          $accent;
+$border-muted:    $accent-muted-3;
+$shadow:          #11111b;
+
+// status
+$warn:            #f1fa8c;
+$critical:        #ff5555;
+
+// brand
+$brand-docker:    #0091e2;
+$brand-jira:      #2684fe;
+$brand-projects:  #ffe843;

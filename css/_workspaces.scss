@@ -19,6 +19,7 @@
     color: $fg-muted;
     font-size: 0.85rem;
     border-radius: 0px;
+    font-weight: 600;
     transition: background-color 0.15s ease, color 0.15s ease;
     &:hover {
         background-color: $surface-hover;
@@ -26,7 +27,7 @@
     }
     &.active {
         background-color: $accent-muted-2;
-        color: $accent;
+        color: $surface;
     }
     &.occupied {
         text-decoration: underline;

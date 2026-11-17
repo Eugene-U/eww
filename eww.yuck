@@ -51,25 +51,9 @@
 	)
 )
 
-(defwidget another []
-	(label
-		:class "TEST"
-		:text "ANOTHER"
-	)
-)
-
-
-; (defwidget bar []
-; 	(centerbox
-; 		:class "bar"
-; 		(test)
-; 		(test)
-; 		(test)
-; 	)
-; )
 
 (defwidget bar [monitor_name]
-		(overlay
+	(overlay
 		(centerbox
 			:class "bar"
 			(box (children :nth 0))
@@ -87,22 +71,6 @@
 		)
 	)
 )
-
-
-; (defwindow bar
-; 	:monitor 0
-; 	:geometry (geometry :x "0%"
-; 	:y "0%"
-; 	:width "100%"
-; 	:height "32px"
-; 	:anchor "top center")
-; 	:stacking "fg"
-; 	:windowtype "dock"
-; 	:exclusive true
-; 	:wm-ignore false
-; 	(bar)
-; )
-
 
 (defwindow bar-left
 	:monitor 0
@@ -136,6 +104,6 @@
 	(bar :monitor_name "DP-1"
 		(workspaces :monitor_name "DP-1")
 		(active_window)
-		(another)
+		(test)
 	)
 )
